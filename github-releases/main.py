@@ -1,4 +1,4 @@
-import argparse
+import typer
 from rich import box
 from colorama import Fore, Style, init
 from rich.console import Console
@@ -43,7 +43,6 @@ class Github:
         else:
             return None
 
-
 def txt_to_dict(file_path):
     repo_dict = {}
     with open(file_path, 'r') as file:
@@ -58,34 +57,38 @@ def txt_to_dict(file_path):
 # Initialize colorama
 init(autoreset=True)
 
-# Set up argument parsing
-parser = argparse.ArgumentParser(description="Fetch latest releases from GitHub repositories.")
-parser.add_argument('--token', type=str, help='Github token')
-parser.add_argument('--repos', type=str, help='Repositories to fetch')
+# Create a Typer app
+app = typer.Typer()
 
-args = parser.parse_args()
+@app.command()
+def main(token: str = typer.Option(None, help="Github token"),
+         repos: str = typer.Option(..., help="Repositories to fetch")):
+    github = Github(token=token)
 
-github = Github(token=args.token)
+    # Convert the file path to a dictionary of repositories
+    releases = txt_to_dict(repos)
+    console = Console()
 
-releases = txt_to_dict(args.repos)
-console = Console()
+    # Set up the table for displaying release information
+    table = Table(show_header=True, header_style="bold magenta", show_footer=False, row_styles=["none", "dim"], pad_edge=False, box=box.SIMPLE_HEAD)
+    table.add_column("Repository", style="green")
+    table.add_column("Tag", style="yellow")
+    table.add_column("URL", style="blue")
 
-table = Table(show_header=True, header_style="bold magenta", show_footer=False, row_styles=["none", "dim"], pad_edge=False, box=box.SIMPLE_HEAD)
-table.add_column("Repository", style="green")
-table.add_column("Tag", style="yellow")
-table.add_column("URL", style="blue")
+    # Iterate through repositories
+    for owner, repo in track(releases.items(), description="Finding releases..."):
+        latest_release = github.get_latest_release(owner, repo)
 
-# Iterate through repositories
-for owner, repo in track(releases.items(), description="Finding releases..."):
-    latest_release = github.get_latest_release(owner, repo)
+        if latest_release:
+            table.add_row(
+                f"{owner}/{repo}",
+                f"{latest_release['tag_name']}",
+                f"https://github.com/{owner}/{repo}/releases/tag/{latest_release['tag_name']}",
+            )
+        else:
+            print(f"{Fore.RED}Failed to fetch the latest release information for {owner}/{repo}.{Style.RESET_ALL}")
 
-    if latest_release:
-        table.add_row(
-            f"{owner}/{repo}",
-            f"{latest_release['tag_name']}",
-            f"https://github.com/{owner}/{repo}/releases/tag/{latest_release['tag_name']}",
-        )
-    else:
-        print(f"{Fore.RED}Failed to fetch the latest release information for {owner}/{repo}.{Style.RESET_ALL}")
+    console.print(table)
 
-console.print(table)
+if __name__ == "__main__":
+    app()
