@@ -1,0 +1,13 @@
+[project]
+name = "github-releases"
+version = "0.1.0"
+description = "A Python script that fetches the latest releases from specified GitHub repositories. It uses the GitHub API and provides the ability to display the results in a well-formatted table using the `rich` library. The script allows you to specify a list of repositories and fetch the latest release details for each one."
+readme = "README.md"
+authors = ["Veit Osiander", "Lukas Huber"]
+requires-python = ">=3.12"
+dependencies = [
+    "colorama>=0.4.6",
+    "loguru>=0.7.2",
+    "requests>=2.32.3",
+    "rich>=13.9.1",
+]
