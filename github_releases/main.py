@@ -112,7 +112,7 @@ def main(
         show_header=True,
         header_style="bold magenta",
         show_footer=False,
-        row_styles=["none", "dim"],
+        row_styles=["none", "cyan"],
         pad_edge=False,
         box=box.SIMPLE_HEAD,
     )
