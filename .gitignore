@@ -113,4 +113,5 @@ secret.json
 
 # Add your own patterns below this line
 releases.txt
+issues.txt
 .python-version

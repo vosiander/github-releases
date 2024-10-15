@@ -9,6 +9,7 @@ A Python script that fetches the latest releases from specified GitHub repositor
 - Supports GitHub Personal Access Token (PAT) for authenticated requests.
 - Handles multiple repositories from a text file input.
 - Provides progress tracking while fetching release data.
+- Fetch and display issue statuses from GitHub repositories.
 
 ## Requirements
 
@@ -33,6 +34,8 @@ pip install argparse rich colorama loguru requests
 
 ## Usage
 
+### Fetching Releases
+
 1. Create a `.txt` file containing a list of GitHub repositories in the following format:
 
     ```
@@ -54,26 +57,49 @@ pip install argparse rich colorama loguru requests
 
    If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
 
+### Fetching Issue Statuses
+
+1. Create a `.txt` file containing a list of GitHub issue URLs in the following format:
+
+    ```
+    https://github.com/owner/repo/issues/issue_number
+    ```
+
+    Example:
+
+    ```
+    https://github.com/microsoft/vscode/issues/12345
+    https://github.com/torvalds/linux/issues/67890
+    ```
+
+2. Run the script, specifying the token (if needed) and the text file containing issue URLs:
+
+    ```bash
+    python github_release_fetcher.py issues --token <your_token> --issues_file <path_to_issues_file>
+    ```
+
+   If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
+
 ### Example
 
 ```bash
-python github_release_fetcher.py --token your_token --repos repos.txt
+python github_release_fetcher.py issues --token your_token --issues_file issues.txt
 ```
 
 ### Output
 
-The script will print a formatted table like this:
+The script will print a formatted table with issue details like this:
 
 ```
-┌─────────────────────────┬──────────────┬─────────────────────────────────────────────────────────────┐
-│ Repository              │ Tag          │ URL                                                         │
-├─────────────────────────┼──────────────┼─────────────────────────────────────────────────────────────┤
-│ microsoft/vscode        │ v1.59.1      │ https://github.com/microsoft/vscode/releases/tag/v1.59.1     │
-│ torvalds/linux          │ v5.14        │ https://github.com/torvalds/linux/releases/tag/v5.14         │
-└─────────────────────────┴──────────────┴─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┬──────────────┬─────────────────────────────────────────────┐
+│ Issue URL                                    │ Status       │ Name                                        │
+├──────────────────────────────────────────────┼──────────────┼─────────────────────────────────────────────┤
+│ https://github.com/microsoft/vscode/issues/1 │ open         │ Issue Title                                 │
+│ https://github.com/torvalds/linux/issues/2   │ closed       │ Another Issue Title                         │
+└──────────────────────────────────────────────┴──────────────┴─────────────────────────────────────────────┘
 ```
 
-If the latest release cannot be fetched, an error message will be printed.
+If the issue status cannot be fetched, an error message will be printed.
 
 ## Notes
 
