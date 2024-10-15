@@ -13,23 +13,21 @@ A Python script that fetches the latest releases from specified GitHub repositor
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.12+
 - GitHub Personal Access Token (optional for private repositories)
 
-### Dependencies
+### Installation
 
-The script uses the following Python packages:
-
-- `argparse` - For argument parsing.
-- `rich` - For creating beautifully formatted tables.
-- `colorama` - For color output in terminal.
-- `loguru` - For logging (optional, can be enhanced for detailed logs).
-- `requests` - For making HTTP requests to the GitHub API.
-
-Install the required dependencies via `pip`:
+To set up the development environment, use `uv` to manage dependencies:
 
 ```bash
-pip install argparse rich colorama loguru requests
+uv sync
+```
+
+To install the package directly from GitHub, use `pip`:
+
+```bash
+pip install git+https://github.com/yourusername/github-releases.git
 ```
 
 ## Usage
@@ -49,10 +47,10 @@ pip install argparse rich colorama loguru requests
     torvalds/linux
     ```
 
-2. Run the script, specifying the token (if needed) and the text file containing repositories:
+2. Run the script using the command line, specifying the token (if needed) and the text file containing repositories:
 
     ```bash
-    python github_release_fetcher.py --token <your_token> --repos <path_to_repos_file>
+    github-releases --token <your_token> --repos <path_to_repos_file>
     ```
 
    If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
@@ -72,10 +70,10 @@ pip install argparse rich colorama loguru requests
     https://github.com/torvalds/linux/issues/67890
     ```
 
-2. Run the script, specifying the token (if needed) and the text file containing issue URLs:
+2. Run the script using the command line, specifying the token (if needed) and the text file containing issue URLs:
 
     ```bash
-    python github_release_fetcher.py issues --token <your_token> --issues_file <path_to_issues_file>
+    github-releases issues --token <your_token> --issues_file <path_to_issues_file>
     ```
 
    If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
@@ -83,7 +81,7 @@ pip install argparse rich colorama loguru requests
 ### Example
 
 ```bash
-python github_release_fetcher.py issues --token your_token --issues_file issues.txt
+github-releases issues --token your_token --issues_file issues.txt
 ```
 
 ### Output

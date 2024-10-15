@@ -16,3 +16,8 @@ dependencies = [
 
 [project.scripts]
 github-releases = "github_releases.main:app"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest"
+]
