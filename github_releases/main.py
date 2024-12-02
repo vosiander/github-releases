@@ -45,6 +45,29 @@ def txt_to_dict(file_path: str) -> dict:
                 repo_dict[repo] = owner
     return repo_dict
 
+def txt_to_history(file_path: str) -> dict:
+    """
+        Reads a text file containing repository information and converts it to a dictionary.
+
+        Each line in the file should contain a repository name followed by the owner's name,
+        separated by a slash (e.g., 'repo_name/owner_name').
+
+        Args:
+            file_path (str): Path to the text file containing the repository data.
+
+        Returns:
+            dict: A dictionary where the keys are repository names and the values are their corresponding owners.
+        """
+    repo_dict = {}
+    with open(file_path, "r") as file:
+        for line in file:
+            # Remove any surrounding whitespace or newline characters
+            line = line.strip()
+            if line:  # Skip empty lines
+                repo_owner, tag = line.split(":")
+                repo_dict[repo_owner] = tag
+    return repo_dict
+
 
 def txt_to_list(file_path: str) -> list:
     """
@@ -78,6 +101,7 @@ app = typer.Typer()
 def main(
     repos: Path = typer.Argument(..., help="Repositories to fetch"),
     token: Optional[str] = typer.Option(None, help="Github token"),
+    history: Optional[Path] = typer.Option(None, help="Path to history file"),
 ):
     logger.debug("Received repos path: {}", repos)
     logger.debug("Repos type: {}", type(repos))
@@ -86,6 +110,13 @@ def main(
     # Convert the file path to a dictionary of repositories
     releases = txt_to_dict(str(repos))
     console = Console()
+
+    # Load history if specified
+    history_dict = {}
+    if history:
+        if not history.exists():
+            history.touch()  # Create the file if it does not exist
+        history_dict = txt_to_history(str(history))
 
     # Set up the table for displaying release information
     table = Table(
@@ -98,24 +129,40 @@ def main(
     )
     table.add_column("Repository", style="green")
     table.add_column("Tag", style="yellow")
+    table.add_column("Previous Tag", style="red")
+    table.add_column("Changed?", style="magenta")
     table.add_column("URL", style="blue")
 
     # Iterate through repositories
+    new_history = []
     for owner, repo in track(releases.items(), description="Finding releases..."):
         latest_release = github.get_latest_release(owner, repo)
+        previous_tag = history_dict.get(f"{owner}/{repo}", "N/A")
 
         if latest_release:
             table.add_row(
                 f"{owner}/{repo}",
                 f"{latest_release['tag_name']}",
+                previous_tag,
+                "X" if previous_tag != latest_release['tag_name'] else "-",
                 f"https://github.com/{owner}/{repo}/releases/tag/{latest_release['tag_name']}",
             )
+            new_history.append(f"{owner}/{repo}:{latest_release['tag_name']}")
         else:
             print(
                 f"{Fore.RED}Failed to fetch the latest release information for {owner}/{repo}.{Style.RESET_ALL}"
             )
 
     console.print(table)
+
+    # Ask user if they want to write new history to file
+    if history:
+        if typer.confirm("Do you want to write the changes to the history file?"):
+            with open(history, "w") as file:
+                for entry in new_history:
+                    file.write(f"{entry}\n")
+        else:
+            console.print("No changes were made to the history file.")
 
 
 @app.command()
