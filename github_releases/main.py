@@ -102,6 +102,7 @@ def main(
     repos: Path = typer.Argument(..., help="Repositories to fetch"),
     token: Optional[str] = typer.Option(None, help="Github token"),
     history: Optional[Path] = typer.Option(None, help="Path to history file"),
+    updated_only: bool = typer.Option(False, "--updated-only", help="Show only entries with changes"),
 ):
     logger.debug("Received repos path: {}", repos)
     logger.debug("Repos type: {}", type(repos))
@@ -140,13 +141,15 @@ def main(
         previous_tag = history_dict.get(f"{owner}/{repo}", "N/A")
 
         if latest_release:
-            table.add_row(
-                f"{owner}/{repo}",
-                f"{latest_release['tag_name']}",
-                previous_tag,
-                "X" if previous_tag != latest_release['tag_name'] else "-",
-                f"https://github.com/{owner}/{repo}/releases/tag/{latest_release['tag_name']}",
-            )
+            has_changed = previous_tag != latest_release['tag_name']
+            if not updated_only or has_changed:
+                table.add_row(
+                    f"{owner}/{repo}",
+                    f"{latest_release['tag_name']}",
+                    previous_tag,
+                    "X" if has_changed else "-",
+                    f"https://github.com/{owner}/{repo}/releases/tag/{latest_release['tag_name']}",
+                )
             new_history.append(f"{owner}/{repo}:{latest_release['tag_name']}")
         else:
             print(
