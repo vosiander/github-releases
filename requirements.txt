@@ -2,3 +2,8 @@ rich
 colorama
 loguru
 requests
+fastapi
+uvicorn
+typer
+pydantic
+pydantic-settings

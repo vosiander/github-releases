@@ -1,15 +1,16 @@
 # GitHub Latest Release Fetcher
 
-A Python script that fetches the latest releases from specified GitHub repositories. It uses the GitHub API and provides the ability to display the results in a well-formatted table using the `rich` library. The script allows you to specify a list of repositories and fetch the latest release details for each one.
+A Python application that fetches the latest releases from specified GitHub repositories. It provides both a CLI interface and a REST API, allowing you to track repository releases and manage them programmatically.
 
 ## Features
 
-- Fetch the latest releases from GitHub repositories.
-- Display the releases in a clean, colorful table using `rich`.
-- Supports GitHub Personal Access Token (PAT) for authenticated requests.
-- Handles multiple repositories from a text file input.
-- Provides progress tracking while fetching release data.
-- Fetch and display issue statuses from GitHub repositories.
+- Dual interface: CLI tool and REST API
+- Fetch the latest releases from GitHub repositories
+- Track and compare release tags with history
+- Display releases in a clean, colorful table (CLI mode)
+- Fetch and display issue statuses
+- RESTful API endpoints for programmatic access
+- Supports GitHub Personal Access Token (PAT)
 
 ## Requirements
 
@@ -32,7 +33,11 @@ pip install git+https://github.com/yourusername/github-releases.git
 
 ## Usage
 
-### Fetching Releases
+The application can be used in two modes: CLI and API server.
+
+### CLI Mode
+
+#### Fetching Releases
 
 1. Create a `.txt` file containing a list of GitHub repositories in the following format:
 
@@ -41,77 +46,121 @@ pip install git+https://github.com/yourusername/github-releases.git
     ```
 
     Example:
-
     ```
     microsoft/vscode
     torvalds/linux
     ```
 
-2. Run the script using the command line, specifying the token (if needed) and the text file containing repositories:
+2. Run the command:
 
     ```bash
     github-releases --token <your_token> --repos <path_to_repos_file> [--history <path_to_history_file>] [--updated-only]
     ```
 
-   If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
+   Options:
+   - `--token`: GitHub Personal Access Token (optional)
+   - `--history`: Path to history file for tracking changes
+   - `--updated-only`: Show only repositories with new releases
 
-   If the `--history` flag is used, the history file will be loaded at the start and then added as an additional column in the final table. After the script displays all releases, you will be asked if the changes should be written to the history file. If yes, the previous content will be overwritten.
+#### Fetching Issue Statuses
 
-   The `--updated-only` flag can be used to show only repositories where the latest tag differs from the previous tag in the history file. This is useful when you want to focus on repositories that have new releases since your last check.
-
-### Fetching Issue Statuses
-
-1. Create a `.txt` file containing a list of GitHub issue URLs in the following format:
+1. Create a `.txt` file with GitHub issue URLs:
 
     ```
     https://github.com/owner/repo/issues/issue_number
     ```
 
-    Example:
-
-    ```
-    https://github.com/microsoft/vscode/issues/12345
-    https://github.com/torvalds/linux/issues/67890
-    ```
-
-2. Run the script using the command line, specifying the token (if needed) and the text file containing issue URLs:
+2. Run the command:
 
     ```bash
     github-releases issues --token <your_token> --issues_file <path_to_issues_file>
     ```
 
-   If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
+### API Mode
 
-### Example
+Start the API server with:
 
 ```bash
-github-releases issues --token your_token --issues_file issues.txt
+github-releases serve [--host HOST] [--port PORT] [--token TOKEN]
 ```
 
-### Output
+Options:
+- `--host`: Host to bind the server to (default: 127.0.0.1)
+- `--port`: Port to run the server on (default: 8000)
+- `--token`: GitHub token for API operations (optional)
 
-The script will print a formatted table with issue details like this:
+#### API Endpoints
+
+1. Add New Repository
+   ```http
+   POST /api/repositories
+   Content-Type: application/json
+
+   {
+     "repository": "owner/repo"
+   }
+   ```
+
+2. Refresh Repository Tags
+   ```http
+   POST /api/repositories/refresh
+   ```
+   Updates all repositories and returns their current tags.
+
+3. Get Repository Tag
+   ```http
+   GET /api/repositories/{owner}/{repo}/tag
+   ```
+   Returns the latest tag for a specific repository.
+
+4. Get History
+   ```http
+   GET /api/repositories/history
+   ```
+   Returns all tracked repositories and their saved tags from the history file.
+
+#### API Documentation
+
+When running in API mode, access the interactive API documentation at:
+- Swagger UI: http://127.0.0.1:8000/docs
+- ReDoc: http://127.0.0.1:8000/redoc
+
+### Environment Configuration
+
+Configure the application using environment variables:
+
+```bash
+# GitHub API token for authentication
+export GITHUB_RELEASES_GITHUB_TOKEN=your_token
+
+# API server settings (optional)
+export GITHUB_RELEASES_HOST=127.0.0.1
+export GITHUB_RELEASES_PORT=8000
+```
+
+### Example Output (CLI Mode)
+
+The CLI displays a formatted table with release information:
 
 ```
-┌──────────────────────────────────────────────┬──────────────┬─────────────────────────────────────────────┐
-│ Issue URL                                    │ Status       │ Name                                        │
-├──────────────────────────────────────────────┼──────────────┼─────────────────────────────────────────────┤
-│ https://github.com/microsoft/vscode/issues/1 │ open         │ Issue Title                                 │
-│ https://github.com/torvalds/linux/issues/2   │ closed       │ Another Issue Title                         │
-└──────────────────────────────────────────────┴──────────────┴─────────────────────────────────────────────┘
+┌──────────────────────┬─────────┬──────────────┬──────────┬────────────────────────────┐
+│ Repository           │ Tag     │ Previous Tag │ Changed? │ URL                        │
+├──────────────────────┼─────────┼──────────────┼──────────┼────────────────────────────┤
+│ microsoft/vscode     │ v1.2.0  │ v1.1.0       │ X        │ https://github.com/...     │
+│ torvalds/linux      │ v6.1    │ v6.0         │ X        │ https://github.com/...     │
+└──────────────────────┴─────────┴──────────────┴──────────┴────────────────────────────┘
 ```
-
-If the issue status cannot be fetched, an error message will be printed.
 
 ## Notes
 
-- **Rate Limiting**: Unauthenticated requests to the GitHub API are limited to 60 requests per hour. If you need to make more requests, use a GitHub Personal Access Token.
-- **Private Repositories**: A token is required to access private repositories.
+- **Rate Limiting**: Unauthenticated requests are limited to 60/hour. Use a token for higher limits.
+- **Private Repositories**: Require a GitHub Personal Access Token.
+- **API Server**: Runs on localhost by default. Configure host/port via environment variables.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contributions
 
-Feel free to open issues, suggest features, or contribute to this project via pull requests. All contributions are welcome!
+Feel free to open issues, suggest features, or contribute via pull requests. All contributions are welcome!
