@@ -50,12 +50,14 @@ pip install git+https://github.com/yourusername/github-releases.git
 2. Run the script using the command line, specifying the token (if needed) and the text file containing repositories:
 
     ```bash
-    github-releases --token <your_token> --repos <path_to_repos_file> [--history <path_to_history_file>]
+    github-releases --token <your_token> --repos <path_to_repos_file> [--history <path_to_history_file>] [--updated-only]
     ```
 
    If no GitHub token is provided, the script will make unauthenticated requests, which have lower rate limits.
 
    If the `--history` flag is used, the history file will be loaded at the start and then added as an additional column in the final table. After the script displays all releases, you will be asked if the changes should be written to the history file. If yes, the previous content will be overwritten.
+
+   The `--updated-only` flag can be used to show only repositories where the latest tag differs from the previous tag in the history file. This is useful when you want to focus on repositories that have new releases since your last check.
 
 ### Fetching Issue Statuses
 
