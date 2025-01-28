@@ -14,15 +14,6 @@ from github_releases.core.config import settings
 from github_releases.services.github import GitHubService
 from github_releases.api.routes import router as api_router
 
-# Remove the default handler
-logger.remove()
-
-# Check the environment variable "DEBUG"
-if os.getenv("DEBUG") == "1":
-    logger.add(lambda msg: print(msg, end=''), level="DEBUG")
-else:
-    logger.add(lambda msg: print(msg, end=''), level="WARNING")
-
 app = typer.Typer()
 api = FastAPI(
     title=settings.api_title,
@@ -137,17 +128,28 @@ def issues(
 def serve(
     host: str = typer.Option(settings.host, help="Host to bind the server to"),
     port: int = typer.Option(settings.port, help="Port to run the server on"),
-    token: Optional[str] = typer.Option(None, help="Github token for API operations")
+    token: Optional[str] = typer.Option(None, help="Github token for API operations"),
+    repos_file: Path = typer.Option("repositories.txt", help="Path to repositories file"),
+    history_file: Path = typer.Option("history.txt", help="Path to history file"),
 ):
     """
     Start the FastAPI server for API access.
     """
-    # Set the token in environment if provided
+    # Set the configuration in environment
     if token:
         os.environ["GITHUB_RELEASES_GITHUB_TOKEN"] = token
+    os.environ["GITHUB_RELEASES_REPOS_FILE"] = str(repos_file)
+    os.environ["GITHUB_RELEASES_HISTORY_FILE"] = str(history_file)
         
     logger.info(f"Starting API server at http://{host}:{port}")
     logger.info("API documentation available at /docs")
+    logger.info(f"Using repositories file: {repos_file}")
+    logger.info(f"Using history file: {history_file}")
+    
+    # Create files if they don't exist
+    repos_file.touch(exist_ok=True)
+    history_file.touch(exist_ok=True)
+    
     uvicorn.run(
         api,
         host=host,

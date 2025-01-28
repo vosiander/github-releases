@@ -81,13 +81,17 @@ The application can be used in two modes: CLI and API server.
 Start the API server with:
 
 ```bash
-github-releases serve [--host HOST] [--port PORT] [--token TOKEN]
+github-releases serve [OPTIONS]
 ```
 
 Options:
 - `--host`: Host to bind the server to (default: 127.0.0.1)
 - `--port`: Port to run the server on (default: 8000)
 - `--token`: GitHub token for API operations (optional)
+- `--repos-file`: Path to repositories file (default: repositories.txt)
+- `--history-file`: Path to history file (default: history.txt)
+
+The repositories and history files specified via CLI will be used by all API endpoints. You don't need to specify these files in the API calls.
 
 #### API Endpoints
 
@@ -127,16 +131,18 @@ When running in API mode, access the interactive API documentation at:
 
 ### Environment Configuration
 
-Configure the application using environment variables:
+The application can be configured either through CLI options when starting the server or through environment variables:
 
 ```bash
-# GitHub API token for authentication
-export GITHUB_RELEASES_GITHUB_TOKEN=your_token
-
-# API server settings (optional)
+# Server settings (can also be set via CLI)
 export GITHUB_RELEASES_HOST=127.0.0.1
 export GITHUB_RELEASES_PORT=8000
+export GITHUB_RELEASES_GITHUB_TOKEN=your_token
+export GITHUB_RELEASES_REPOS_FILE=repositories.txt
+export GITHUB_RELEASES_HISTORY_FILE=history.txt
 ```
+
+CLI options take precedence over environment variables.
 
 ### Example Output (CLI Mode)
 

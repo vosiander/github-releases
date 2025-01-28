@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 from pydantic_settings import BaseSettings
@@ -8,9 +9,9 @@ class Settings(BaseSettings):
     api_description: str = "API for managing GitHub repository releases and tags"
     api_version: str = "1.0.0"
     
-    # File paths
-    repositories_file: Path = Path("repositories.txt")
-    history_file: Path = Path("history.txt")
+    # File paths (set via CLI)
+    repositories_file: Path = Path(os.getenv("GITHUB_RELEASES_REPOS_FILE", "repositories.txt"))
+    history_file: Path = Path(os.getenv("GITHUB_RELEASES_HISTORY_FILE", "history.txt"))
     
     # GitHub settings
     github_token: Optional[str] = None
