@@ -7,3 +7,5 @@ uvicorn
 typer
 pydantic
 pydantic-settings
+sqlalchemy
+alembic

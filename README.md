@@ -31,6 +31,47 @@ To install the package directly from GitHub, use `pip`:
 pip install git+https://github.com/yourusername/github-releases.git
 ```
 
+### Database Setup
+
+The application uses SQLAlchemy with SQLite by default, but supports other databases through configuration.
+
+1. Initialize the database (first time setup):
+```bash
+# Create initial migration
+alembic revision --autogenerate -m "Initial migration"
+
+# Apply migration
+alembic upgrade head
+```
+
+2. For future database schema changes:
+```bash
+# After modifying models, create a new migration
+alembic revision --autogenerate -m "Description of changes"
+
+# Apply the new migration
+alembic upgrade head
+
+# To rollback a migration
+alembic downgrade -1
+```
+
+3. Database Configuration:
+   - Default: SQLite database at `github_releases.db`
+   - Custom database: Set `GITHUB_RELEASES_DATABASE_URL` environment variable
+   
+Example database URLs:
+```bash
+# SQLite (default)
+export GITHUB_RELEASES_DATABASE_URL="sqlite:///github_releases.db"
+
+# PostgreSQL
+export GITHUB_RELEASES_DATABASE_URL="postgresql://user:password@localhost/dbname"
+
+# MySQL
+export GITHUB_RELEASES_DATABASE_URL="mysql://user:password@localhost/dbname"
+```
+
 ## Usage
 
 The application can be used in two modes: CLI and API server.
@@ -39,42 +80,28 @@ The application can be used in two modes: CLI and API server.
 
 #### Fetching Releases
 
-1. Create a `.txt` file containing a list of GitHub repositories in the following format:
+Run the command to check releases for tracked repositories:
 
-    ```
-    owner/repo
-    ```
+```bash
+github-releases --token <your_token> [--updated-only]
+```
 
-    Example:
-    ```
-    microsoft/vscode
-    torvalds/linux
-    ```
-
-2. Run the command:
-
-    ```bash
-    github-releases --token <your_token> --repos <path_to_repos_file> [--history <path_to_history_file>] [--updated-only]
-    ```
-
-   Options:
-   - `--token`: GitHub Personal Access Token (optional)
-   - `--history`: Path to history file for tracking changes
-   - `--updated-only`: Show only repositories with new releases
+Options:
+- `--token`: GitHub Personal Access Token (optional)
+- `--updated-only`: Show only repositories with new releases
 
 #### Fetching Issue Statuses
 
-1. Create a `.txt` file with GitHub issue URLs:
+Run the command with a list of issue URLs:
 
-    ```
-    https://github.com/owner/repo/issues/issue_number
-    ```
+```bash
+github-releases issues --token <your_token> --issues <issue_urls>
+```
 
-2. Run the command:
-
-    ```bash
-    github-releases issues --token <your_token> --issues_file <path_to_issues_file>
-    ```
+Example:
+```bash
+github-releases issues --token <your_token> --issues "https://github.com/owner/repo/issues/1 https://github.com/owner/repo/issues/2"
+```
 
 ### API Mode
 
@@ -88,10 +115,8 @@ Options:
 - `--host`: Host to bind the server to (default: 127.0.0.1)
 - `--port`: Port to run the server on (default: 8000)
 - `--token`: GitHub token for API operations (optional)
-- `--repos-file`: Path to repositories file (default: repositories.txt)
-- `--history-file`: Path to history file (default: history.txt)
 
-The repositories and history files specified via CLI will be used by all API endpoints. You don't need to specify these files in the API calls.
+The application uses a database to store repository and tag information. Configure the database connection using the `GITHUB_RELEASES_DATABASE_URL` environment variable.
 
 #### API Endpoints
 
@@ -121,7 +146,7 @@ The repositories and history files specified via CLI will be used by all API end
    ```http
    GET /api/repositories/history
    ```
-   Returns all tracked repositories and their saved tags from the history file.
+   Returns all tracked repositories and their tags from the database, including previous tags and URLs.
 
 #### API Documentation
 
@@ -131,18 +156,19 @@ When running in API mode, access the interactive API documentation at:
 
 ### Environment Configuration
 
-The application can be configured either through CLI options when starting the server or through environment variables:
+The application can be configured through environment variables:
 
 ```bash
-# Server settings (can also be set via CLI)
+# Server settings
 export GITHUB_RELEASES_HOST=127.0.0.1
 export GITHUB_RELEASES_PORT=8000
 export GITHUB_RELEASES_GITHUB_TOKEN=your_token
-export GITHUB_RELEASES_REPOS_FILE=repositories.txt
-export GITHUB_RELEASES_HISTORY_FILE=history.txt
+
+# Database settings (optional, defaults to SQLite)
+export GITHUB_RELEASES_DATABASE_URL="sqlite:///github_releases.db"
 ```
 
-CLI options take precedence over environment variables.
+CLI options take precedence over environment variables when available.
 
 ### Example Output (CLI Mode)
 
