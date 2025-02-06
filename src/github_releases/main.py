@@ -27,12 +27,16 @@ api.include_router(api_router, prefix="/api")
 def import_repositories_from_file(path: Path, github_service: GitHubService):
     """Import repositories from a text file into the database."""
     logger.info(f"Importing repositories from {path}")
+    existing_repos = github_service.get_repositories()
     with open(path, "r") as file:
         for line in file:
             repo = line.strip().strip('-').strip()
             if repo:
-                logger.info(f"Adding repository: {repo}")
-                github_service.add_repository(repo)
+                if repo in existing_repos:
+                    logger.info(f"Skipping existing repository: {repo}")
+                else:
+                    logger.info(f"Adding repository: {repo}")
+                    github_service.add_repository(repo)
 
 def create_rich_table() -> Table:
     """Create and return a Rich table for displaying release information."""
