@@ -24,7 +24,7 @@ class Tools:
 
             :param token: Github Personal Access Token (optional)
             """
-            logger.debug(
+            logger.trace(
                 "Initializing Github object with token: {}",
                 "provided" if token else "not provided",
             )

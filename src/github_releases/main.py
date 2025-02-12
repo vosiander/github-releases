@@ -1,3 +1,25 @@
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "colorama",
+#     "loguru",
+#     "requests",
+#     "rich",
+#     "typer",
+#     "fastapi",
+#     "uvicorn",
+#     "pydantic",
+#     "pydantic-settings",
+#     "sqlalchemy",
+#     "alembic",
+# ]
+# [tool.uv.sources]
+# github_releases = { path = "./src/github_releases" }
+#
+# ///
+
 from typing import Optional, List
 import typer
 import uvicorn
@@ -5,14 +27,24 @@ from fastapi import FastAPI
 from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich.progress import track
+from rich.progress import track, Progress
 import os
 from loguru import logger
+
+import sys
 from pathlib import Path
+
+# Add src directory to Python path
+src_path = str(Path(__file__).parent.parent.parent / "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 from github_releases.core.config import settings, get_db
 from github_releases.services.github import GitHubService
 from github_releases.api.routes import router as api_router
+
+# Initialize Rich console at module level
+console = Console()
 
 app = typer.Typer()
 api = FastAPI(
@@ -26,17 +58,15 @@ api.include_router(api_router, prefix="/api")
 
 def import_repositories_from_file(path: Path, github_service: GitHubService):
     """Import repositories from a text file into the database."""
-    logger.info(f"Importing repositories from {path}")
     existing_repos = github_service.get_repositories()
     with open(path, "r") as file:
         for line in file:
             repo = line.strip().strip('-').strip()
             if repo:
-                if repo in existing_repos:
-                    logger.info(f"Skipping existing repository: {repo}")
-                else:
-                    logger.info(f"Adding repository: {repo}")
+                if repo not in existing_repos:
+                    logger.trace(f"Adding repository: {repo}")
                     github_service.add_repository(repo)
+
 
 def create_rich_table() -> Table:
     """Create and return a Rich table for displaying release information."""
@@ -64,7 +94,6 @@ def main(
     """
     GitHub Releases CLI tool for checking repository releases.
     """
-    console = Console()
     db = next(get_db())
     github_service = GitHubService(db=db, token=token)
     
@@ -74,7 +103,10 @@ def main(
             import_repositories_from_file(prefill_txt, github_service)
         
         # Get updated tags
-        tags = github_service.update_tags()
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Updating tags...", total=None)
+            tags = github_service.update_tags()
+            progress.update(task, completed=True)
         
         # Create and populate table
         table = create_rich_table()
@@ -102,7 +134,6 @@ def issues(
     """
     db = next(get_db())
     github = GitHubService(db=db, token=token)
-    console = Console()
 
     try:
         # Set up the table for displaying issue information
@@ -125,21 +156,25 @@ def issues(
         with open(issues_file, "r") as file:
             issues = [line.strip() for line in file if line.strip()]
 
-        # Iterate through issues
-        for issue_url in track(issues, description="Fetching issue statuses..."):
-            issue_status = github.github.get_issue_status(issue_url)
+        # Iterate through issues with progress tracking
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Fetching issue statuses...", total=len(issues))
+            for issue_url in issues:
+                issue_status = github.github.get_issue_status(issue_url)
 
-            if issue_status:
-                table.add_row(
-                    issue_url,
-                    issue_status["status"],
-                    issue_status["name"],
-                    issue_status["published_at"],
-                    issue_status["last_activity"],
-                    issue_status["last_comment"],
-                )
-            else:
-                print(f"Failed to fetch issue status for {issue_url}.")
+                if issue_status:
+                    table.add_row(
+                        issue_url,
+                        issue_status["status"],
+                        issue_status["name"],
+                        issue_status["published_at"],
+                        issue_status["last_activity"],
+                        issue_status["last_comment"],
+                    )
+                else:
+                    console.print(f"[red]Failed to fetch issue status for {issue_url}.[/red]")
+                
+                progress.advance(task)
 
         console.print(table)
     finally:
