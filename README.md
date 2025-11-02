@@ -114,6 +114,57 @@ $ githubrel bulk-get repos.txt --output json
 ]
 ```
 
+#### History
+
+Compare historical versions with current releases to identify updates:
+
+```bash
+# Text output (default)
+githubrel history history.txt
+
+# JSON output
+githubrel history history.txt --output json
+```
+
+**File Format:**
+
+Create a text file with repository:version pairs (one per line):
+
+```text
+# history.txt - Comments start with #
+owner/repo1:v1.0.0
+owner/repo2:v2.5.1
+another-owner/repo3:v0.8.0
+```
+
+**Examples:**
+
+```bash
+$ cat history.txt
+spf13/cobra:v1.10.0
+google/go-github:v75.0.0
+
+$ githubrel history history.txt
+spf13/cobra: v1.10.0 -> v1.10.1 (UPDATE AVAILABLE)
+google/go-github: v75.0.0 -> v76.0.0 (UPDATE AVAILABLE)
+
+$ githubrel history history.txt --output json
+[
+  {
+    "repository": "spf13/cobra",
+    "historical_version": "v1.10.0",
+    "current_version": "v1.10.1",
+    "has_update": true
+  },
+  {
+    "repository": "google/go-github",
+    "historical_version": "v75.0.0",
+    "current_version": "v76.0.0",
+    "has_update": true
+  }
+]
+```
+
 #### Other Commands
 
 ```bash
@@ -145,6 +196,7 @@ type Plugin interface {
 **Available Plugins:**
 - `get`: Fetch latest release for a single repository
 - `bulk-get`: Process multiple repositories from a file
+- `history`: Compare historical versions with current releases
 
 ### Project Structure
 

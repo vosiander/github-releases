@@ -9,6 +9,7 @@ import (
 	"github.com/vosiander/github-releases/plugins"
 	"github.com/vosiander/github-releases/plugins/bulk"
 	"github.com/vosiander/github-releases/plugins/get"
+	"github.com/vosiander/github-releases/plugins/history"
 )
 
 // version is set via ldflags during build
@@ -41,6 +42,9 @@ func run() error {
 	}
 	if err := registry.Register(bulk.New(client)); err != nil {
 		return fmt.Errorf("failed to register bulk plugin: %w", err)
+	}
+	if err := registry.Register(history.New(client)); err != nil {
+		return fmt.Errorf("failed to register history plugin: %w", err)
 	}
 
 	// Initialize root command

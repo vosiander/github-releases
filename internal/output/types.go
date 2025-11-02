@@ -16,3 +16,12 @@ type BulkResult struct {
 	Tag        string `json:"tag,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
+
+// HistoryResult represents the result of comparing historical version with current release
+type HistoryResult struct {
+	Repository        string `json:"repository"`
+	HistoricalVersion string `json:"historical_version"`
+	CurrentVersion    string `json:"current_version,omitempty"`
+	HasUpdate         bool   `json:"has_update"`
+	Error             string `json:"error,omitempty"`
+}

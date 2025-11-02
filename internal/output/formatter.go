@@ -58,3 +58,33 @@ func formatJSON(data interface{}) (string, error) {
 	}
 	return string(jsonBytes), nil
 }
+
+// FormatHistoryResults formats history results based on the output format
+func FormatHistoryResults(results []HistoryResult, format OutputFormat) (string, error) {
+	switch format {
+	case FormatJSON:
+		return formatJSON(results)
+	case FormatText:
+		return formatHistoryText(results), nil
+	default:
+		return "", fmt.Errorf("unsupported output format: %s", format)
+	}
+}
+
+// formatHistoryText formats history results as plain text
+func formatHistoryText(results []HistoryResult) string {
+	var lines []string
+	for _, result := range results {
+		if result.Error != "" {
+			lines = append(lines, fmt.Sprintf("%s: %s -> ERROR - %s",
+				result.Repository, result.HistoricalVersion, result.Error))
+		} else if result.HasUpdate {
+			lines = append(lines, fmt.Sprintf("%s: %s -> %s",
+				result.Repository, result.HistoricalVersion, result.CurrentVersion))
+		} else {
+			lines = append(lines, fmt.Sprintf("%s: %s",
+				result.Repository, result.HistoricalVersion))
+		}
+	}
+	return strings.Join(lines, "\n")
+}

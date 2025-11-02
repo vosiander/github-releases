@@ -11,12 +11,12 @@ import (
 	"github.com/vosiander/github-releases/pkg/github"
 )
 
-// BulkPlugin implements the bulk-get command for fetching multiple repositories
+// BulkPlugin implements the bulk command for fetching multiple repositories
 type BulkPlugin struct {
 	client *github.Client
 }
 
-// New creates a new bulk-get plugin instance
+// New creates a new bulk plugin instance
 func New(client *github.Client) *BulkPlugin {
 	return &BulkPlugin{
 		client: client,
@@ -25,7 +25,7 @@ func New(client *github.Client) *BulkPlugin {
 
 // Name returns the plugin name
 func (p *BulkPlugin) Name() string {
-	return "bulk-get"
+	return "bulk"
 }
 
 // Description returns the plugin description
@@ -33,10 +33,10 @@ func (p *BulkPlugin) Description() string {
 	return "Get latest release tags for multiple repositories from a file"
 }
 
-// Execute runs the bulk-get command
+// Execute runs the bulk command
 func (p *BulkPlugin) Execute(args []string, outputFormat string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("usage: githubrel bulk-get <file>")
+		return fmt.Errorf("usage: githubrel bulk <file>")
 	}
 
 	filePath := args[0]
