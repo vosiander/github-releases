@@ -37,6 +37,45 @@ class GitHubService:
             )
         return None
 
+    def update_repository_tag(self, repository: str, tag: str, url: Optional[str] = None) -> bool:
+        """Updates or creates a tag for a repository in the database.
+        
+        Args:
+            repository: Repository in format owner/repo
+            tag: The tag value to set
+            url: Optional URL for the release
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Check if tag already exists
+            existing_tag = self.db.query(TagModel).filter(
+                TagModel.repository == repository
+            ).first()
+            
+            if existing_tag:
+                # Update existing tag
+                existing_tag.previous_tag = existing_tag.tag
+                existing_tag.tag = tag
+                if url:
+                    existing_tag.url = url
+            else:
+                # Create new tag
+                tag_model = TagModel(
+                    repository=repository,
+                    tag=tag,
+                    url=url
+                )
+                self.db.add(tag_model)
+                
+            self.db.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error updating repository tag: {e}")
+            self.db.rollback()
+            return False
+    
     def update_tags(self) -> List[Tag]:
         """Updates tags for all repositories and returns the changes."""
         updated_tags = []

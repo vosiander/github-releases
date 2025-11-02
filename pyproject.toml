@@ -19,6 +19,7 @@ dependencies = [
     "pydantic-settings",
     "sqlalchemy",
     "alembic",
+    "psycopg2",
 ]
 
 [project.scripts]

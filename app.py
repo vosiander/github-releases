@@ -14,6 +14,7 @@
 #     "pydantic-settings",
 #     "sqlalchemy",
 #     "alembic",
+#     "psycopg2",
 # ]
 # [tool.uv.sources]
 # github_releases = { path = "./src/github_releases" }
@@ -35,13 +36,13 @@ import sys
 from pathlib import Path
 
 # Add src directory to Python path
-src_path = str(Path(__file__).parent.parent.parent / "src")
+src_path = str(Path(__file__).parent / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from github_releases.core.config import settings, get_db
-from github_releases.services.github import GitHubService
-from github_releases.api.routes import router as api_router
+from src.github_releases.core.config import settings, get_db
+from src.github_releases.services.github import GitHubService
+from src.github_releases.api.routes import router as api_router
 
 # Initialize Rich console at module level
 console = Console()
@@ -57,12 +58,32 @@ api = FastAPI(
 api.include_router(api_router, prefix="/api")
 
 def import_repositories_from_file(path: Path, github_service: GitHubService):
-    """Import repositories from a text file into the database."""
+    """Import repositories from a text file into the database.
+    
+    Supports both formats:
+    - owner/repo
+    - owner/repo:tag (also updates the tag in the database)
+    """
     existing_repos = github_service.get_repositories()
     with open(path, "r") as file:
         for line in file:
-            repo = line.strip().strip('-').strip()
-            if repo:
+            entry = line.strip().strip('-').strip()
+            if not entry:
+                continue
+                
+            # Check if entry is in history format (owner/repo:tag)
+            if ':' in entry:
+                repo, tag = entry.split(':', 1)
+                if repo not in existing_repos:
+                    logger.trace(f"Adding repository: {repo}")
+                    github_service.add_repository(repo)
+                
+                # Update the tag in the database
+                logger.trace(f"Updating tag for {repo} to {tag}")
+                github_service.update_repository_tag(repo, tag)
+            else:
+                # Original format (owner/repo)
+                repo = entry
                 if repo not in existing_repos:
                     logger.trace(f"Adding repository: {repo}")
                     github_service.add_repository(repo)
@@ -89,7 +110,8 @@ def create_rich_table() -> Table:
 def main(
     token: Optional[str] = typer.Option(None, help="Github token"),
     updated_only: bool = typer.Option(False, "--updated-only", help="Show only entries with changes"),
-    prefill_txt: Optional[Path] = typer.Option(None, help="Import repositories from text file"),
+    prefill_txt: Optional[Path] = typer.Option(None, help="Import repositories from text file (supports both 'owner/repo' and 'owner/repo:tag' formats)"),
+    write_history: Optional[Path] = typer.Option(None, help="Path to write history file containing github-path and current tag"),
 ):
     """
     GitHub Releases CLI tool for checking repository releases.
@@ -108,6 +130,12 @@ def main(
             tags = github_service.update_tags()
             progress.update(task, completed=True)
         
+        # Write history file if requested
+        if write_history:
+            with open(write_history, "w") as f:
+                for tag in tags:
+                    f.write(f"{tag.repository}:{tag.tag}\n")
+
         # Create and populate table
         table = create_rich_table()
         for tag in tags:
@@ -185,7 +213,7 @@ def serve(
     host: str = typer.Option(settings.host, help="Host to bind the server to"),
     port: int = typer.Option(settings.port, help="Port to run the server on"),
     token: Optional[str] = typer.Option(None, help="Github token for API operations"),
-    prefill_txt: Optional[Path] = typer.Option(None, help="Import repositories from text file"),
+    prefill_txt: Optional[Path] = typer.Option(None, help="Import repositories from text file (supports both 'owner/repo' and 'owner/repo:tag' formats)"),
 ):
     """
     Start the FastAPI server for API access.
