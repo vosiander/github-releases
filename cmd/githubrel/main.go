@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/vosiander/github-releases/pkg/github"
+	mcpserver "github.com/vosiander/github-releases/pkg/mcp"
 	"github.com/vosiander/github-releases/plugins"
 	"github.com/vosiander/github-releases/plugins/bulk"
 	"github.com/vosiander/github-releases/plugins/get"
@@ -17,11 +22,14 @@ var version = "dev"
 
 var (
 	outputFormat string
+	mcpPort      int
+	logger       logrus.FieldLogger
 )
 
 func main() {
+	logger = logrus.WithField("version", version)
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		logger.Infof("Error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -48,7 +56,7 @@ func run() error {
 	}
 
 	// Initialize root command
-	rootCmd := initRootCmd()
+	rootCmd := initRootCmd(client)
 
 	// Register plugins as subcommands
 	registerPlugins(rootCmd, registry)
@@ -57,7 +65,7 @@ func run() error {
 	return rootCmd.Execute()
 }
 
-func initRootCmd() *cobra.Command {
+func initRootCmd(client *github.Client) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "githubrel",
 		Short: "GitHub releases tracker CLI",
@@ -78,6 +86,31 @@ func initRootCmd() *cobra.Command {
 			fmt.Printf("githubrel version %s\n", version)
 		},
 	})
+
+	mcpCmd := &cobra.Command{
+		Use:   "mcp",
+		Short: "MCP server",
+		Run: func(cmd *cobra.Command, args []string) {
+			server := mcpserver.CreateMCPServer(client)
+
+			logger.Infof("Starting MCP server on port %d", mcpPort)
+
+			handler := mcp.NewStreamableHTTPHandler(
+				func(r *http.Request) *mcp.Server {
+					return server
+				},
+				&mcp.StreamableHTTPOptions{},
+			)
+
+			addr := fmt.Sprintf(":%d", mcpPort)
+			if err := http.ListenAndServe(addr, handler); err != nil {
+				log.Fatalf("Server error: %v", err)
+			}
+		},
+	}
+
+	mcpCmd.Flags().IntVar(&mcpPort, "port", 8556, "Port to listen on")
+	rootCmd.AddCommand(mcpCmd)
 
 	return rootCmd
 }

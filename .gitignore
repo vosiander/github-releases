@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+memory-bank
 
 # Go test binaries, built with `go test -c`
 *.test

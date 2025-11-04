@@ -165,6 +165,37 @@ $ githubrel history history.txt --output json
 ]
 ```
 
+#### MCP Server
+
+Run as an MCP (Model Context Protocol) server to expose GitHub release tools:
+
+```bash
+# Start MCP server on default port (8556)
+githubrel mcp
+
+# Start on custom port
+githubrel mcp --port 8080
+```
+
+The MCP server provides three tools:
+- **get_release**: Get the latest release information for a single GitHub repository
+- **bulk_releases**: Get the latest release tags for multiple repositories concurrently
+- **compare_history**: Compare historical versions with current releases to detect updates
+
+**Example MCP tool usage:**
+
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get_release",
+    "arguments": {
+      "repository": "spf13/cobra"
+    }
+  }
+}
+```
+
 #### Other Commands
 
 ```bash
@@ -175,6 +206,7 @@ githubrel version
 githubrel --help
 githubrel get --help
 githubrel bulk-get --help
+githubrel mcp --help
 ```
 
 ## Architecture
