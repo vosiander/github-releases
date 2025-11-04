@@ -277,7 +277,7 @@ githubrel/
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.25 or later
 - GitHub personal access token (optional, for higher rate limits)
 
 ### Dependencies

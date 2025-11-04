@@ -5,6 +5,7 @@
 *.so
 *.dylib
 memory-bank
+helm/
 
 # Go test binaries, built with `go test -c`
 *.test
