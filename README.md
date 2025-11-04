@@ -13,6 +13,24 @@ A CLI tool to fetch and track GitHub release tags from repositories. Built with 
 
 ## Installation
 
+### Docker
+
+Pull and run the latest Docker image:
+
+```bash
+# Pull the image
+docker pull ghcr.io/vosiander/github-releases:latest
+
+# Run MCP server (default)
+docker run -p 8556:8556 -e GITHUB_TOKEN=your_token_here ghcr.io/vosiander/github-releases:latest
+
+# Run on custom port
+docker run -p 8080:8080 -e GITHUB_TOKEN=your_token_here ghcr.io/vosiander/github-releases:latest mcp --port 8080
+
+# Run other commands
+docker run -e GITHUB_TOKEN=your_token_here ghcr.io/vosiander/github-releases:latest get spf13/cobra
+```
+
 ### Build from Source
 
 ```bash

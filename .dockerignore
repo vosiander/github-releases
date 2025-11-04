@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+
+# Documentation
+README.md
+LICENSE
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Test files
+*_test.go
+testdata
+
+# Build artifacts
+githubrel
+githubrel-*
+*.exe
+*.sha256
+
+# Go
+vendor/
