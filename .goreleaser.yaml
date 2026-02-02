@@ -1,0 +1,69 @@
+version: 2
+
+project_name: githubrel
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: githubrel
+    main: ./cmd/githubrel
+    binary: githubrel
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+brews:
+  - name: githubrel
+    repository:
+      owner: vosiander
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/vosiander/github-releases"
+    description: "GitHub releases tracker CLI"
+    license: "MIT"
+    install: |
+      bin.install "githubrel"
+    test: |
+      system "#{bin}/githubrel", "version"
+
+release:
+  github:
+    owner: vosiander
+    name: github-releases
+  draft: false
+  prerelease: auto
+  name_template: "{{.Tag}}"

@@ -31,6 +31,25 @@ docker run -p 8080:8080 -e GITHUB_TOKEN=your_token_here ghcr.io/vosiander/github
 docker run -e GITHUB_TOKEN=your_token_here ghcr.io/vosiander/github-releases:latest get spf13/cobra
 ```
 
+### Kubernetes/Helm
+
+Deploy to Kubernetes using the included Helm chart:
+
+```bash
+# Quick start with direct token (development)
+helm install github-releases ./helm \
+  --set github.token=ghp_your_token_here
+
+# Production deployment with existing secret
+kubectl create secret generic github-token \
+  --from-literal=token=ghp_your_token_here
+
+helm install github-releases ./helm \
+  --set github.existingSecret=github-token
+```
+
+For detailed Helm configuration options, see [helm/README.md](helm/README.md).
+
 ### Build from Source
 
 ```bash
