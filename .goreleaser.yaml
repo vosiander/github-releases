@@ -25,11 +25,11 @@ builds:
 
 archives:
   - id: default
-    format: tar.gz
+    formats: ['tar.gz']
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ['zip']
 
 checksum:
   name_template: "checksums.txt"
@@ -45,20 +45,22 @@ changelog:
       - Merge pull request
       - Merge branch
 
-brews:
+homebrew_casks:
   - name: githubrel
     repository:
       owner: vosiander
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    directory: Formula
+    directory: Casks
     homepage: "https://github.com/vosiander/github-releases"
     description: "GitHub releases tracker CLI"
     license: "MIT"
-    install: |
-      bin.install "githubrel"
-    test: |
-      system "#{bin}/githubrel", "version"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/githubrel"]
+          end
 
 release:
   github:
